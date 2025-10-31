@@ -4,11 +4,11 @@ import ReactFlow, {
     applyNodeChanges,
     Background,
     Controls,
+    Handle,
     MiniMap,
+    Position,
     ReactFlowProvider,
     useReactFlow,
-    Handle,
-    Position,
 } from "react-flow-renderer";
 import "react-flow-renderer/dist/style.css";
 
@@ -45,7 +45,7 @@ const NetworkNode = ({data}) => {
     );
 };
 
-const NormalNode = ({ data }) => (
+const NormalNode = ({data}) => (
     <div
         style={{
             width: 100,
@@ -65,70 +65,123 @@ const NormalNode = ({ data }) => (
         {data.label}
         {/* Sadece bir handle: top */}
         {/*<Handle type="source" position={Position.Top} id="a" style={{ background: "#555" }} />*/}
-        <Handle type="target" position={Position.Bottom} id="b" style={{ background: "#555" }} />
+        <Handle type="target" position={Position.Bottom} id="b" style={{background: "#555"}}/>
     </div>
 );
+
+// Backend'den gelen (örnek) node verisi:
+const backendNodes = [
+    {id: "0", type: "networkNode", data: {label: "Network"}},
+    {id: "1", type: "normalNode", data: {label: "Node-1"}},
+    {id: "2", type: "normalNode", data: {label: "Node-2"}},
+    {id: "3", type: "normalNode", data: {label: "Node-3"}},
+    {id: "4", type: "normalNode", data: {label: "Node-4"}},
+];
+
+const generateNodes = (size) => {
+    const nodes = [...backendNodes];
+    for (let i = 5; i < size + 5; i++) {
+        nodes.push({id: i + "", type: "normalNode", data: {label: "Node-" + i}})
+    }
+    return nodes;
+}
+
+function generateCircularPositions(nodes, center) {
+    const nodeCount = nodes.length;
+
+    // Node sayısına göre yarıçap dinamik artar
+    const minRadius = 150;
+    const spacing = 25; // her node için ekstra mesafe
+    const radius = minRadius + nodeCount * spacing * 0.5;
+
+    const angleStep = (2 * Math.PI) / nodeCount;
+
+    return nodes.map((node, index) => {
+        const angle = index * angleStep;
+
+        return {
+            ...node,
+            position: {
+                x: center.x + radius * Math.cos(angle),
+                y: center.y + radius * Math.sin(angle),
+            },
+        };
+    });
+}
+
+
+const networkNode = backendNodes.find(n => n.type === "networkNode");
+const otherNodes = generateNodes(25).filter(n => n.type !== "networkNode");
+
+const positionedOtherNodes = generateCircularPositions(otherNodes, {x: 600, y: 300});
+
+const initialNodes = [
+    {...networkNode, position: {x: 600, y: 300}},
+    ...positionedOtherNodes
+];
 
 const nodeTypes = {
     networkNode: NetworkNode,
     normalNode: NormalNode,
 };
 
-const initialNodes = [
-    {
-        id: "1",
-        type: "networkNode", // özel node tipi
-        data: {label: "Network"},
-        position: {x: 250, y: -150},
-    },
-    {
-        id: "2",
-        data: {label: "Node-1"},
-        position: {x: 100, y: 100},
-        style: {
-            width: 100,
-            height: 50,
-            background: "#90EE90",
-            color: "#000",
-            border: "1px solid #FFA500",
-            borderRadius: 10,
-            textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
-            fontSize: "8px",
-        },
-        type: "normalNode",
-    },
-    {
-        id: "3",
-        data: {label: "Node-2"},
-        position: {x: 400, y: 200},
-        style: {
-            width: 100,
-            height: 50,
-            background: "#90EE90",
-            color: "#000",
-            border: "1px solid #FFA500",
-            borderRadius: 10,
-            textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
-            fontSize: "8px",
-        },
-        type: "normalNode",
-    },
-];
+// const initialNodes = generateCircularPositions(generateNodes(10));
+
+// const initialNodes = [
+//     {
+//         id: "1",
+//         type: "networkNode", // özel node tipi
+//         data: {label: "Network"},
+//         position: {x: 250, y: -150},
+//     },
+//     {
+//         id: "2",
+//         data: {label: "Node-1"},
+//         position: {x: 100, y: 100},
+//         style: {
+//             width: 100,
+//             height: 50,
+//             background: "#90EE90",
+//             color: "#000",
+//             border: "1px solid #FFA500",
+//             borderRadius: 10,
+//             textAlign: "center",
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//             fontWeight: "bold",
+//             fontSize: "8px",
+//         },
+//         type: "normalNode",
+//     },
+//     {
+//         id: "3",
+//         data: {label: "Node-2"},
+//         position: {x: 400, y: 200},
+//         style: {
+//             width: 100,
+//             height: 50,
+//             background: "#90EE90",
+//             color: "#000",
+//             border: "1px solid #FFA500",
+//             borderRadius: 10,
+//             textAlign: "center",
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//             fontWeight: "bold",
+//             fontSize: "8px",
+//         },
+//         type: "normalNode",
+//     },
+// ];
 
 const initialEdges = [
     {
         id: "e1-2",
-        source: "1",
+        source: "0",
         sourceHandle: "bottom", // hangi handle'dan çıkıyor
-        target: "2",
+        target: "1",
         animated: true,
         type: "smoothstep",
         label: "↔",
@@ -163,7 +216,7 @@ function FlowCanvas() {
             const networkId = "1"; // Network node'un ID'si
             if (params.source === networkId || params.target === networkId) {
                 setEdges((eds) =>
-                    eds.concat({ ...params, animated: true, type: "smoothstep", label:"Java" })
+                    eds.concat({...params, animated: true, type: "smoothstep", label: "Java"})
                 );
             }
         },
