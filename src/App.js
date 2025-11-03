@@ -54,7 +54,7 @@ function generateCircularPositions(nodes, center) {
 
 
 const networkNode = backendNodes.find(n => n.type === "networkNode");
-const otherNodes = generateNodes(5).filter(n => n.type !== "networkNode");
+const otherNodes = generateNodes(0).filter(n => n.type !== "networkNode");
 
 const positionedOtherNodes = generateCircularPositions(otherNodes, {x: 600, y: 300});
 
@@ -215,6 +215,7 @@ function FlowCanvas() {
 
             <div
                 style={{
+                    zIndex: 1000,
                     position: "absolute",
                     top: 10,
                     left: 10,
@@ -224,6 +225,16 @@ function FlowCanvas() {
                     borderRadius: "6px",
                     fontFamily: "monospace",
                 }}>
+                <div>
+                    <button
+                        style={{background: "red", borderRadius: 10, cursor: "pointer"}}
+                        onClick={() => {
+                            const copyNodes = [...nodes];
+                            setNodes([...copyNodes.slice(0, copyNodes.length - 1)])
+                        }}>Remove
+                    </button>
+                </div>
+                <br/>
                 🖱 x: {mousePos.x}, y: {mousePos.y}
                 {selectedLabel && (
                     <div style={{marginTop: 10, color: "#d6e3eb"}}>
