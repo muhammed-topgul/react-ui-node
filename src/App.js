@@ -90,8 +90,16 @@ function FlowCanvas() {
                 eds.concat({
                     ...params,
                     animated: true,
-                    type: "smoothstep",
-                    label: `${params.sourceHandle}⇄${params.targetHandle}`
+                    type: "straight",
+                    label: `${params.sourceHandle}⇄${params.targetHandle}`,
+                    labelBgStyle: {
+                        cursor: "pointer",
+                        fill: "#ee6d21",
+                        opacity: 0.5
+                    },
+                    labelStyle: {
+                        fill: "black"
+                    }
                 })
             );
         }
@@ -164,14 +172,21 @@ function FlowCanvas() {
                     sourceHandle,
                     target: node.id,
                     targetHandle,
-                    type: "smoothstep",
+                    type: "straight",
                     animated: true,
                     label: `${sourceHandle}⇄${targetHandle}`,
                     style: {
                         strokeWidth: selected ? 2.5 : 1,
                         stroke: selected ? "#0c0d0c" : ""
                     },
-                    labelBgStyle: {cursor: "pointer"},
+                    labelBgStyle: {
+                        cursor: "pointer",
+                        fill: node.type === "normalNode" ? "#90EE90" : "#ee6d21",
+                        opacity: 0.5
+                    },
+                    labelStyle: {
+                        fill: "black"
+                    }
                 };
             });
     }
@@ -196,11 +211,14 @@ function FlowCanvas() {
                         sourceHandle,
                         target: node.id,
                         targetHandle,
-                        type: "smoothstep",
+                        type: "straight",
                         animated: true,
                         label: `${sourceHandle}⇄${targetHandle}`,
                         style: {strokeWidth: 1.5},
-                        labelBgStyle: {cursor: "pointer"},
+                        labelBgStyle: {cursor: "pointer", fill: "#90EE90", opacity: 0.5},
+                        labelStyle: {
+                            fill: "black"
+                        }
                     });
                 });
             return [...prevEdges, ...newEdges];
