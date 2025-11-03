@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import ReactFlow, {
     applyEdgeChanges,
     applyNodeChanges,
@@ -65,7 +65,10 @@ const NormalNode = ({data}) => (
         {data.label}
         {/* Sadece bir handle: top */}
         {/*<Handle type="source" position={Position.Top} id="a" style={{ background: "#555" }} />*/}
-        <Handle type="target" position={Position.Bottom} id="b" style={{background: "#555"}}/>
+        <Handle type="target" position={Position.Top} id="top" style={{background: "#555"}}/>
+        <Handle type="target" position={Position.Right} id="right" style={{background: "#555"}}/>
+        <Handle type="target" position={Position.Bottom} id="bottom" style={{background: "#555"}}/>
+        <Handle type="target" position={Position.Left} id="left" style={{background: "#555"}}/>
     </div>
 );
 
@@ -111,7 +114,7 @@ function generateCircularPositions(nodes, center) {
 
 
 const networkNode = backendNodes.find(n => n.type === "networkNode");
-const otherNodes = generateNodes(25).filter(n => n.type !== "networkNode");
+const otherNodes = generateNodes(0).filter(n => n.type !== "networkNode");
 
 const positionedOtherNodes = generateCircularPositions(otherNodes, {x: 600, y: 300});
 
@@ -269,6 +272,52 @@ function FlowCanvas() {
         [nodes.length, project]
     );
 
+    useEffect(() => {
+        const network = nodes.find(n => n.type === "networkNode");
+        if (!network) return;
+
+        const newEdges = nodes
+            .filter(n => n.type === "normalNode")
+            .map((node) => {
+                const dx = node.position.x - network.position.x;
+                const dy = node.position.y - network.position.y;
+
+                let sourceHandle, targetHandle;
+
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx > 0) {
+                        sourceHandle = "right";
+                        targetHandle = "left";
+                    } else {
+                        sourceHandle = "left";
+                        targetHandle = "right";
+                    }
+                } else {
+                    if (dy > 0) {
+                        sourceHandle = "bottom";
+                        targetHandle = "top";
+                    } else {
+                        sourceHandle = "top";
+                        targetHandle = "bottom";
+                    }
+                }
+
+                return {
+                    id: `edge-${network.id}-${node.id}`,
+                    source: network.id,
+                    sourceHandle,
+                    target: node.id,
+                    targetHandle,
+                    type: "smoothstep",
+                    animated: true,
+                    label: `${sourceHandle}⇄${targetHandle}`,
+                    style: { strokeWidth: 1 },
+                };
+            });
+
+        setEdges(newEdges);
+    }, [nodes]);
+
     return (
         <div style={{height: "100vh", position: "relative"}}>
             <ReactFlow
@@ -280,8 +329,7 @@ function FlowCanvas() {
                 onConnect={onConnect}
                 onMouseMove={handleMouseMove}
                 onContextMenu={handleContextMenu}
-                fitView
-            >
+                fitView>
                 <MiniMap/>
                 <Controls/>
                 <Background gap={8}/>
