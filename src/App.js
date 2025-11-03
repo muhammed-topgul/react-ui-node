@@ -196,6 +196,7 @@ function FlowCanvas() {
     const [nodes, setNodes] = useState(initialNodes);
     const [edges, setEdges] = useState(initialEdges);
     const [mousePos, setMousePos] = useState({x: 0, y: 0});
+    const [selectedLabel, setSelectedLabel] = useState(null);
     const {project} = useReactFlow();
 
     const onNodesChange = useCallback(
@@ -302,6 +303,8 @@ function FlowCanvas() {
                     }
                 }
 
+                const selected = selectedLabel === `edge-${network.id}-${node.id}`;
+
                 return {
                     id: `edge-${network.id}-${node.id}`,
                     source: network.id,
@@ -311,12 +314,25 @@ function FlowCanvas() {
                     type: "smoothstep",
                     animated: true,
                     label: `${sourceHandle}⇄${targetHandle}`,
-                    style: { strokeWidth: 1 },
+                    style: {
+                        strokeWidth: selected ? 1.5: 1,
+                        stroke: selected ? "#0c0d0c" : ""
+                    },
+                    labelBgStyle: { cursor: "pointer" },
                 };
             });
 
         setEdges(newEdges);
-    }, [nodes]);
+    }, [nodes, selectedLabel]);
+
+    const onEdgeClick = useCallback((event, edge) => {
+        event.stopPropagation();
+        if (selectedLabel === edge.id) {
+            setSelectedLabel(null);
+            return;
+        }
+        setSelectedLabel(edge.id);
+    }, [selectedLabel]);
 
     return (
         <div style={{height: "100vh", position: "relative"}}>
@@ -329,6 +345,7 @@ function FlowCanvas() {
                 onConnect={onConnect}
                 onMouseMove={handleMouseMove}
                 onContextMenu={handleContextMenu}
+                onEdgeClick={onEdgeClick}
                 fitView>
                 <MiniMap/>
                 <Controls/>
@@ -348,6 +365,11 @@ function FlowCanvas() {
                 }}
             >
                 🖱 x: {mousePos.x}, y: {mousePos.y}
+                {selectedLabel && (
+                    <div style={{marginTop: 10, color: "#d6e3eb"}}>
+                        <strong>Seçilen Label:</strong> {selectedLabel}
+                    </div>
+                )}
             </div>
         </div>
     );
