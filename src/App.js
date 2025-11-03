@@ -22,6 +22,10 @@ const backendNodes = [
     {id: "5", type: "normalNode", data: {label: "Node-5"}},
 ];
 
+const newRandom = (from, to) => {
+    return Math.floor(Math.random() * (from - to + 1)) + to;
+}
+
 const generateNodes = (size) => {
     const nodes = [...backendNodes];
     for (let i = 5; i < size + 5; i++) {
@@ -51,7 +55,6 @@ function generateCircularPositions(nodes, center) {
         };
     });
 }
-
 
 const networkNode = backendNodes.find(n => n.type === "networkNode");
 const otherNodes = generateNodes(0).filter(n => n.type !== "networkNode");
@@ -88,7 +91,12 @@ function FlowCanvas() {
         const networkId = "0";
         if (params.source === networkId || params.target === networkId) {
             setEdges((eds) =>
-                eds.concat({...params, animated: true, type: "smoothstep", label: "Java"})
+                eds.concat({
+                    ...params,
+                    animated: true,
+                    type: "smoothstep",
+                    label: `${params.sourceHandle}⇄${params.targetHandle}`
+                })
             );
         }
     }, []);
@@ -115,57 +123,45 @@ function FlowCanvas() {
             id,
             type: "extraNode",
             data: {label: `Extra ${id}`},
-            position,
-            style: {
-                width: 100,
-                height: 50,
-                background: "#90EE90",
-                color: "#000",
-                border: "1px solid #FFA500",
-                borderRadius: 10,
-                textAlign: "center",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "bold",
-                fontSize: "8px",
-            },
+            position
         };
         setNodes((nds) => nds.concat(newNode));
     }, [nodes.length, project]);
 
-    useEffect(() => {
+    const getHandle = (node, network) => {
+        const dx = node.position.x - network.position.x;
+        const dy = node.position.y - network.position.y;
+
+        let sourceHandle, targetHandle;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 0) {
+                sourceHandle = "right";
+                targetHandle = "left";
+            } else {
+                sourceHandle = "left";
+                targetHandle = "right";
+            }
+        } else {
+            if (dy > 0) {
+                sourceHandle = "bottom";
+                targetHandle = "top";
+            } else {
+                sourceHandle = "top";
+                targetHandle = "bottom";
+            }
+        }
+        return {sourceHandle, targetHandle};
+    }
+
+    const organizeEdges = () => {
         const network = nodes.find(n => n.type === "networkNode");
         if (!network) return;
-
-        const newEdges = nodes
-            .filter(n => n.type === "normalNode")
+        return nodes
+            .filter(n => n.type === "normalNode" || n.type === "extraNode")
             .map((node) => {
-                const dx = node.position.x - network.position.x;
-                const dy = node.position.y - network.position.y;
-
-                let sourceHandle, targetHandle;
-
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx > 0) {
-                        sourceHandle = "right";
-                        targetHandle = "left";
-                    } else {
-                        sourceHandle = "left";
-                        targetHandle = "right";
-                    }
-                } else {
-                    if (dy > 0) {
-                        sourceHandle = "bottom";
-                        targetHandle = "top";
-                    } else {
-                        sourceHandle = "top";
-                        targetHandle = "bottom";
-                    }
-                }
-
                 const selected = selectedLabel === `edge-${network.id}-${node.id}`;
-
+                const {sourceHandle, targetHandle} = getHandle(node, network);
                 return {
                     id: `edge-${network.id}-${node.id}`,
                     source: network.id,
@@ -182,9 +178,39 @@ function FlowCanvas() {
                     labelBgStyle: {cursor: "pointer"},
                 };
             });
+    }
 
-        setEdges(newEdges);
-    }, [nodes, selectedLabel]);
+    useEffect(() => {
+        const network = nodes.find(n => n.type === "networkNode");
+        if (!network) return;
+
+        setEdges((prevEdges) => {
+            const existingEdgeIds = new Set(prevEdges.map(e => e.id));
+            const newEdges = [];
+
+            nodes
+                .filter(n => n.type === "normalNode")
+                .forEach(node => {
+                    const edgeId = `edge-${network.id}-${node.id}`;
+                    if (existingEdgeIds.has(edgeId)) return;
+                    const {sourceHandle, targetHandle} = getHandle(node, network);
+                    newEdges.push({
+                        id: edgeId,
+                        source: network.id,
+                        sourceHandle,
+                        target: node.id,
+                        targetHandle,
+                        type: "smoothstep",
+                        animated: true,
+                        label: `${sourceHandle}⇄${targetHandle}`,
+                        style: {strokeWidth: 1.5},
+                        labelBgStyle: {cursor: "pointer"},
+                    });
+                });
+
+            return [...prevEdges, ...newEdges];
+        });
+    }, [nodes.length]);
 
     const onEdgeClick = useCallback((event, edge) => {
         event.stopPropagation();
@@ -227,18 +253,36 @@ function FlowCanvas() {
                 }}>
                 <div>
                     <button
-                        style={{background: "red", borderRadius: 10, cursor: "pointer"}}
+                        style={{background: "#f40b0b", borderRadius: 10, cursor: "pointer"}}
                         onClick={() => {
                             const copyNodes = [...nodes];
                             setNodes([...copyNodes.slice(0, copyNodes.length - 1)])
                         }}>Remove
+                    </button>
+                    <button
+                        style={{background: "#08ea49", borderRadius: 10, cursor: "pointer"}}
+                        onClick={() => {
+                            newRandom();
+                            const id = (nodes.length + 1).toString();
+                            const newNode = {
+                                id,
+                                type: "normalNode",
+                                data: {label: `Extra ${id}`},
+                                position: {x: newRandom(50, 1000), y: newRandom(50, 500)}
+                            };
+                            setNodes((nds) => nds.concat(newNode));
+                        }}>Add
+                    </button>
+                    <button
+                        style={{background: "#0871ea", color: "#fff", borderRadius: 10, cursor: "pointer"}}
+                        onClick={() => setEdges(organizeEdges())}>Organize
                     </button>
                 </div>
                 <br/>
                 🖱 x: {mousePos.x}, y: {mousePos.y}
                 {selectedLabel && (
                     <div style={{marginTop: 10, color: "#d6e3eb"}}>
-                        <strong>Seçilen Label:</strong> {selectedLabel}
+                        <strong>Label:</strong> {selectedLabel}
                     </div>
                 )}
             </div>
