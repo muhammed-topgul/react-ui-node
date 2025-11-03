@@ -54,7 +54,7 @@ function generateCircularPositions(nodes, center) {
 
 
 const networkNode = backendNodes.find(n => n.type === "networkNode");
-const otherNodes = generateNodes(0).filter(n => n.type !== "networkNode");
+const otherNodes = generateNodes(5).filter(n => n.type !== "networkNode");
 
 const positionedOtherNodes = generateCircularPositions(otherNodes, {x: 600, y: 300});
 
@@ -85,7 +85,7 @@ function FlowCanvas() {
     }, []);
 
     const onConnect = useCallback((params) => {
-        const networkId = "0"; // Network node'un ID'si
+        const networkId = "0";
         if (params.source === networkId || params.target === networkId) {
             setEdges((eds) =>
                 eds.concat({...params, animated: true, type: "smoothstep", label: "Java"})
@@ -114,7 +114,7 @@ function FlowCanvas() {
         const newNode = {
             id,
             type: "extraNode",
-            data: {label: `Düğüm ${id}`},
+            data: {label: `Extra ${id}`},
             position,
             style: {
                 width: 100,
@@ -176,7 +176,7 @@ function FlowCanvas() {
                     animated: true,
                     label: `${sourceHandle}⇄${targetHandle}`,
                     style: {
-                        strokeWidth: selected ? 1.5 : 1,
+                        strokeWidth: selected ? 2.5 : 1,
                         stroke: selected ? "#0c0d0c" : ""
                     },
                     labelBgStyle: {cursor: "pointer"},
