@@ -5,7 +5,6 @@ import ReactFlow, {
     Background,
     Controls,
     MiniMap,
-    ReactFlowProvider,
     useReactFlow,
 } from "react-flow-renderer";
 import "react-flow-renderer/dist/style.css";
@@ -36,16 +35,13 @@ const generateNodes = (size) => {
 
 function generateCircularPositions(nodes, center) {
     const nodeCount = nodes.length;
-
     const minRadius = 150;
-    const spacing = 25; // her node için ekstra mesafe
+    const spacing = 25;
     const radius = minRadius + nodeCount * spacing * 0.5;
-
     const angleStep = (2 * Math.PI) / nodeCount;
 
     return nodes.map((node, index) => {
         const angle = index * angleStep;
-
         return {
             ...node,
             position: {
@@ -77,7 +73,7 @@ function FlowCanvas() {
     const [edges, setEdges] = useState([]);
     const [mousePos, setMousePos] = useState({x: 0, y: 0});
     const [selectedLabel, setSelectedLabel] = useState(null);
-    const {project} = useReactFlow();
+    const {project, fitView} = useReactFlow();
 
     const onNodesChange = useCallback((changes) => {
         setNodes((nds) => applyNodeChanges(changes, nds));
@@ -207,9 +203,14 @@ function FlowCanvas() {
                         labelBgStyle: {cursor: "pointer"},
                     });
                 });
-
             return [...prevEdges, ...newEdges];
         });
+    }, [nodes.length]);
+
+    useEffect(() => {
+        if (nodes.length > 0) {
+            setTimeout(() => fitView({duration: 600, padding: 0.5}), 100);
+        }
     }, [nodes.length]);
 
     const onEdgeClick = useCallback((event, edge) => {
@@ -268,7 +269,7 @@ function FlowCanvas() {
                                 id,
                                 type: "normalNode",
                                 data: {label: `Extra ${id}`},
-                                position: {x: newRandom(50, 1000), y: newRandom(50, 500)}
+                                position: {x: newRandom(-1000, 2000), y: newRandom(50, 500)}
                             };
                             setNodes((nds) => nds.concat(newNode));
                         }}>Add
@@ -276,6 +277,10 @@ function FlowCanvas() {
                     <button
                         style={{background: "#0871ea", color: "#fff", borderRadius: 10, cursor: "pointer"}}
                         onClick={() => setEdges(organizeEdges())}>Organize
+                    </button>
+                    <button
+                        style={{background: "#151619", color: "#fff", borderRadius: 10, cursor: "pointer"}}
+                        onClick={() => fitView({duration: 600, padding: 0.5})}>Fit View
                     </button>
                 </div>
                 <br/>
@@ -290,10 +295,4 @@ function FlowCanvas() {
     );
 }
 
-export default function App() {
-    return (
-        <ReactFlowProvider>
-            <FlowCanvas/>
-        </ReactFlowProvider>
-    );
-}
+export default FlowCanvas;
