@@ -10,8 +10,8 @@
     "@xyflow/react": "^12.9.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-flow-renderer": "^10.3.17",
     "react-scripts": "5.0.1",
+    "reactflow": "11.11.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

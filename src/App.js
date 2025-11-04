@@ -6,8 +6,8 @@ import ReactFlow, {
     Controls,
     MiniMap,
     useReactFlow,
-} from "react-flow-renderer";
-import "react-flow-renderer/dist/style.css";
+} from "reactflow";
+import "reactflow/dist/style.css";
 import NormalNode from "./NormalNode";
 import NetworkNode from "./NetworkNode";
 import ExtraNode from "./ExtraNode";
@@ -241,7 +241,7 @@ function FlowCanvas() {
     }, [selectedLabel]);
 
     return (
-        <div style={{height: "100vh", position: "relative"}}>
+        <div style={{height: "98vh", position: "relative"}}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
